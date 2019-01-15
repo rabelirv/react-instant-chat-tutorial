@@ -7,13 +7,43 @@ import config from '../config';
 import Messages from './Messages';
 import ChatInput from './ChatInput';
 
-// This is where the main logic of the app will be. Here is where we will
-// communicate with the chat server (send and receive messages). We will
-// then pass the data received from the server to other components to be
-// displayed
 class ChatApp extends React.Component {
+  socket = {}
+  constructor(props) {
+    super(props)
+    this.state = {
+      messages: []
+    }
+    this.socket = io(config.api).connect()
+    this.socket.on('server:message', message => {
+      this.addMessage(message)
+    })
+  }
+
+
+
+  addMessage =(message)=>{
+    // Append the message to the component state
+    const messages = this.state.messages
+    messages.push(message)
+    this.setState({ messages })
+  }
+
+  sendHandler = (message) => {
+    const messageObject = {
+      username: this.props.username,
+      message
+    }
+    this.socket.emit('client:message', messageObject)
+    messageObject.fromMe = true;
+  this.addMessage(messageObject);
+  }
   render() {
-    // Here we want to render the main chat application components
+    return (<div className="container">
+      <h3>Friendly</h3>
+      <Messages messages={this.state.messages}/>
+      <ChatInput onSend={this.sendHandler}/>
+    </div>)
   }
 
 }
